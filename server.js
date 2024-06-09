@@ -7,11 +7,13 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Set up middleware
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
+// Define routes
 app.get('/', (req, res) => {
     res.send('Welcome to the Shopify-Semaphore Integration App');
 });
@@ -50,4 +52,12 @@ const sendSMS = async (message, recipient) => {
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
+});
+app.get('/dashboard', (req, res) => {
+    try {
+        res.render('dashboard');
+    } catch (error) {
+        console.error('Error rendering dashboard:', error);
+        res.status(500).send('Internal Server Error');
+    }
 });
