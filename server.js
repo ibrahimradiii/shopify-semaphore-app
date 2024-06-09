@@ -2,8 +2,6 @@ const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
-const crypto = require('crypto');
-const querystring = require('querystring');
 require('dotenv').config();
 
 const app = express();
@@ -28,21 +26,26 @@ app.post('/webhook/order-create', async (req, res) => {
     const recipient = order.customer.phone;
 
     try {
-        await sendSMS(message, recipient);
+        const response = await sendSMS(message, recipient);
         res.status(200).send('Order create webhook received');
     } catch (error) {
+        console.error('Error sending SMS:', error);
         res.status(500).send('Error sending SMS');
     }
 });
 
 const sendSMS = async (message, recipient) => {
-    const response = await axios.post('https://api.semaphore.co/api/v4/messages', {
-        apikey: process.env.SEMAPHORE_API_KEY,
-        message: message,
-        number: recipient,
-    });
-
-    return response.data;
+    try {
+        const response = await axios.post('https://api.semaphore.co/api/v4/messages', {
+            apikey: process.env.SEMAPHORE_API_KEY,
+            message: message,
+            number: recipient,
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error in sendSMS function:', error);
+        throw error;
+    }
 };
 
 app.listen(PORT, () => {
