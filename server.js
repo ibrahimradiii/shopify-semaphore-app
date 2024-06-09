@@ -2,6 +2,7 @@ const express = require('express');
 const axios = require('axios');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 require('dotenv').config();
 const { v4: uuidv4 } = require('uuid');
 
