@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Send Custom Message</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Send Custom Message</h1>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/custom-message">Send Custom Message</a>
+                <a href="/templates">Templates</a>
+            </nav>
+        </div>
+    </header>
+    <div class="container main">
+        <h2>Send Custom Message</h2>
+        <form id="customMessageForm">
+            <input type="text" id="phoneNumber" placeholder="Phone Number">
+            <textarea id="customMessage" rows="4" placeholder="Your custom message here"></textarea>
+            <button type="button" onclick="sendCustomMessage()">Send Message</button>
+        </form>
+    </div>
+    <script>
+        function sendCustomMessage() {
+            const phone = document.getElementById('phoneNumber').value;
+            const message = document.getElementById('customMessage').value;
+
+            fetch('/send-sms', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ phone, message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error('Error sending custom message:', error);
+            });
+        }
+    </script>
+</body>
+</html>

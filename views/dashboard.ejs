@@ -1,10 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <h1>Welcome to the Dashboard</h1>
-    <!-- Add forms and tables here to display and manage SMS settings -->
+    <header>
+        <div class="container">
+            <h1>Dashboard</h1>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/custom-message">Send Custom Message</a>
+                <a href="/templates">Templates</a>
+            </nav>
+        </div>
+    </header>
+    <div class="container main">
+        <h2>Order Notification Analytics</h2>
+        <div class="filters">
+            <input type="text" id="search" placeholder="Search by customer name">
+            <select id="statusFilter">
+                <option value="">All Statuses</option>
+                <option value="Success">Success</option>
+                <option value="Failed">Failed</option>
+                <option value="Scheduled">Scheduled</option>
+            </select>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th onclick="sortTable(0)">Order ID</th>
+                    <th onclick="sortTable(1)">Customer Name</th>
+                    <th onclick="sortTable(2)">Phone Number</th>
+                    <th onclick="sortTable(3)">Status</th>
+                </tr>
+            </thead>
+            <tbody id="analytics-body">
+                <!-- Order data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+    <script>
+        document.getElementById('search').addEventListener('input', filterTable);
+        document.getElementById('statusFilter').addEventListener('change', filterTable);
+
+        let sortDirection = {};
+
+        function fetchAnalytics() {
+            fetch('/analytics')
+                .then(response => response.json())
+                .then(data => {
+                    const analyticsBody = document.getElementById('analytics-body');
+                    analyticsBody.innerHTML = '';
+                    data.forEach(order => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${order.orderId}</td>
+                            <td>${order.customerName}</td>
+                            <td>${order.phoneNumber}</td>
+                            <td>${order.status}</td>
+                        `;
+                        analyticsBody.appendChild(row);
+                    });
+                    filterTable();
+                })
+                .catch(error => {
+                    console.error('Error fetching analytics:', error);
+                });
+        }
+
+        function filterTable() {
+            const searchValue = document.getElementById('search').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const table = document.getElementById('analytics-body');
+            const rows = table.getElementsByTagName('tr');
+
+            for (let i = 0; i < rows.length; i++) {
+                const cells = rows[i].getElementsByTagName('td');
+                const customerName = cells[1].innerText.toLowerCase();
+                const status = cells[3].innerText;
+
+                if (customerName.includes(searchValue) && (statusFilter === '' || status === statusFilter)) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
+
+        function sortTable(columnIndex) {
+            const table = document.getElementById('analytics-body');
+            const rows = Array.from(table.getElementsByTagName('tr'));
+            const sortOrder = sortDirection[columnIndex] === 'asc' ? 'desc' : 'asc';
+            sortDirection[columnIndex] = sortOrder;
+
+            rows.sort((a, b) => {
+                const aText = a.getElementsByTagName('td')[columnIndex].innerText;
+                const bText = b.getElementsByTagName('td')[columnIndex].innerText;
+                if (aText < bText) return sortOrder === 'asc' ? -1 : 1;
+                if (aText > bText) return sortOrder === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            table.innerHTML = '';
+            rows.forEach(row => table.appendChild(row));
+
+            const thElements = document.querySelectorAll('th');
+            thElements.forEach((th, index) => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                if (index === columnIndex) {
+                    th.classList.add(sortOrder === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            });
+        }
+
+        fetchAnalytics();
+    </script>
 </body>
 </html>

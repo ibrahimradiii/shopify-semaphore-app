@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Templates</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Templates</h1>
+            <nav>
+                <a href="/">Home</a>
+                <a href="/dashboard">Dashboard</a>
+                <a href="/custom-message">Send Custom Message</a>
+                <a href="/templates">Templates</a>
+            </nav>
+        </div>
+    </header>
+    <div class="container main">
+        <h2>Manage Order Notification Templates</h2>
+        <div class="templates">
+            <h3>Add New Template</h3>
+            <input type="text" id="templateName" placeholder="Template Name">
+            <select id="templateType">
+                <option value="order_create">Order Created</option>
+                <option value="order_fulfilled">Order Fulfilled</option>
+                <option value="abandoned_cart">Abandoned Cart</option>
+            </select>
+            <textarea id="templateContent" rows="4" placeholder="Template Content. Use {{customer_name}}, {{order_id}}, and {{cart_url}} as placeholders."></textarea>
+            <select id="templateSchedule">
+                <option value="instant">Send Instant</option>
+                <option value="delayed">Send After 30 Minutes</option>
+            </select>
+            <button onclick="addTemplate()">Add Template</button>
+        </div>
+        <div class="templates">
+            <h3>Existing Templates</h3>
+            <div id="templateList">
+                <!-- Existing templates will be loaded here -->
+            </div>
+        </div>
+    </div>
+    <script>
+        let templates = [];
+        let currentTemplateId = null;
+
+        function fetchTemplates() {
+            fetch('/api/templates')
+                .then(response => response.json())
+                .then(data => {
+                    templates = data;
+                    const templateList = document.getElementById('templateList');
+                    templateList.innerHTML = '';
+                    templates.forEach(template => {
+                        const templateItem = document.createElement('div');
+                        templateItem.className = 'template-item';
+                        templateItem.innerHTML = `
+                            <h3>${template.name} (${template.type.replace('_', ' ')})</h3>
+                            <textarea id="templateContent-${template.id}" rows="2">${template.content}</textarea>
+                            <select id="templateSchedule-${template.id}">
+                                <option value="instant" ${template.schedule === 'instant' ? 'selected' : ''}>Send Instant</option>
+                                <option value="delayed" ${template.schedule === 'delayed' ? 'selected' : ''}>Send After 30 Minutes</option>
+                            </select>
+                            <button onclick="saveTemplate('${template.id}')">Save</button>
+                            <button onclick="deleteTemplate('${template.id}')">Delete</button>
+                        `;
+                        templateList.appendChild(templateItem);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching templates:', error);
+                });
+        }
+
+        function addTemplate() {
+            const name = document.getElementById('templateName').value;
+            const type = document.getElementById('templateType').value;
+            const content = document.getElementById('templateContent').value;
+            const schedule = document.getElementById('templateSchedule').value;
+
+            fetch('/api/templates', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name, type, content, schedule })
+            })
+            .then(response => response.json())
+            .then(data => {
+                fetchTemplates();
+                resetForm();
+            })
+            .catch(error => {
+                console.error('Error adding template:', error);
+            });
+        }
+
+        function saveTemplate(id) {
+            const content = document.getElementById(`templateContent-${id}`).value;
+            const schedule = document.getElementById(`templateSchedule-${id}`).value;
+
+            fetch(`/api/templates/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ content, schedule })
+            })
+            .then(response => response.json())
+            .then(data => {
+                fetchTemplates();
+            })
+            .catch(error => {
+                console.error('Error saving template:', error);
+            });
+        }
+
+        function deleteTemplate(id) {
+            fetch(`/api/templates/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(data => {
+                fetchTemplates();
+            })
+            .catch(error => {
+                console.error('Error deleting template:', error);
+            });
+        }
+
+        function resetForm() {
+            document.getElementById('templateName').value = '';
+            document.getElementById('templateType').value = 'order_create';
+            document.getElementById('templateContent').value = '';
+            document.getElementById('templateSchedule').value = 'instant';
+            currentTemplateId = null;
+        }
+
+        fetchTemplates();
+    </script>
+</body>
+</html>
